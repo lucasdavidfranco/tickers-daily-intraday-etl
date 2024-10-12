@@ -1,48 +1,22 @@
 
 # IMPORTACION BIBLIOTECAS REQUERIDAS # 
 
-import requests
 import pandas as pd
 import sys
 import hashlib
-import utils
+import db_utils
 
 # DEFINICION DE LA CONEXION A REDSHIFT #
 
-redshift_schema = utils.import_db_variables()['redshift_schema']
-connection = utils.connect_to_redshift()
-alpha_url = utils.import_api_variables()['alpha_url']
-alpha_key = utils.import_api_variables()['alpha_key']
-tickers = utils.import_api_variables()['tickers']
+def upload_dimension_data():
 
-# VARIABLES DE LA API # 
+    redshift_schema = db_utils.import_db_variables()['redshift_schema']
+    connection = db_utils.connect_to_redshift()
+    alpha_url = db_utils.import_api_variables()['alpha_url']
+    alpha_key = db_utils.import_api_variables()['alpha_key']
+    tickers = db_utils.import_api_variables()['tickers']
 
-ticker_params = {
-    'function': 'OVERVIEW',
-    'apikey':  alpha_key,
-}
 
-dataframe_append = []
-
-for ticker in tickers:
-    
-    print(f"Getting data for {ticker}\n")
-    
-    ticker_params['symbol'] = ticker
-
-    ticker_response = requests.get(alpha_url, params = ticker_params)
-            
-    if ticker_response.status_code == 200:  # VERIFICAMOS CONEXION CORRECTA A LA API # 
-
-        raw_json = ticker_response.json()
-
-    else:
-        
-        print(f"Error: Could not retrieve data (State code: {ticker_response.status_code})\n")
-        
-        connection.close()
-        
-        sys.exit("End of process")
         
     # TRANSFORMACIONES A LA RAW DATA PARA OBTENER UN DATAFRAME CON COLUMNAS DESEADAS Y FORMATO DESEADO # 
     

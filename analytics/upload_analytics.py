@@ -1,16 +1,14 @@
 
 # IMPORTACION BIBLIOTECAS REQUERIDAS # 
 
-import requests
-import pandas as pd
 import sys
-import utils
+import utils.db_utils as db_utils
 
 # DEFINICION DE LA CONEXION A REDSHIFT #
 
-redshift_schema = utils.import_db_variables()['redshift_schema']
-connection = utils.connect_to_redshift()
-tickers = utils.import_api_variables()['tickers']
+redshift_schema = db_utils.import_db_variables()['redshift_schema']
+connection = db_utils.connect_to_redshift()
+tickers = db_utils.import_api_variables()['tickers']
     
 # CREACION DE FACT TABLE A PARTIR DE STAGING INTRADIARIO # 
     
