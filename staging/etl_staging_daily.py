@@ -6,12 +6,11 @@ import requests
 import sys
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, '../utils'))
+project_root = os.path.join(current_dir, '..')
+sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def extract_daily_data():
-
-    # DEFINICION DE LA CONEXION A REDSHIFT #
 
     alpha_url = db_utils.import_api_variables()['alpha_url']
     alpha_key = db_utils.import_api_variables()['alpha_key']
@@ -36,6 +35,7 @@ def extract_daily_data():
         ticker_params['symbol'] = ticker
         is_incremental = f"""select max(event_date) as q from "{redshift_schema}".staging_daily_tickers where ticker = '{ticker}'"""
         max_staging_date = connection.execute(is_incremental).fetchone()
+        print(ticker)
         
         if max_staging_date[0] is not None:
             
@@ -61,9 +61,7 @@ def extract_daily_data():
             
             print(f"Error: Could not retrieve data (State code: {ticker_response.status_code})\n")
             sys.exit("End of process")
-            
-        # TRANSFORMACIONES A LA RAW DATA PARA OBTENER UN DATAFRAME CON COLUMNAS DESEADAS Y FORMATO DESEADO # 
-    
+               
     ticker_dataframe_final = pd.concat(dataframe_append, ignore_index = True)
     return ticker_dataframe_final
 
@@ -71,6 +69,8 @@ def transform_daily_data():
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
+    
+    # QUERY PARA OBTENER DF QUE PERMITE DETERMINAR SI ES CARGA HISTORICA O INCREMENTAL #S
 
     is_incremental = f"""select ticker, max(event_date) as last_event_date from "{redshift_schema}".staging_daily_tickers group by 1"""
     max_staging_date_df = pd.read_sql(is_incremental, connection)
@@ -111,5 +111,3 @@ def load_daily_data():
     else:
 
         print(f"No new information to upload\n")
-
-load_daily_data()

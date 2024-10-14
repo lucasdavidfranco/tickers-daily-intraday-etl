@@ -6,7 +6,8 @@ import pandas as pd
 import sys
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, '../utils'))
+project_root = os.path.join(current_dir, '..')
+sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def extract_dimension_data():
@@ -116,10 +117,36 @@ def load_dimension_data():
         WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
         AND "{redshift_schema}".analytics_dim_tickers.subrogate_key != temp_dim_tickers.subrogate_key;
 
-        INSERT INTO "{redshift_schema}".analytics_dim_tickers (ticker, asset_type, name, country, sector, industry,
-            address, official_site, analyst_rating, subrogate_key, date_from, date_to, is_current, audit_datetime)
-        SELECT t.ticker, t.asset_type, t.name, t.country, t.sector, t.industry, t.address, t.official_site,
-            t.analyst_rating, t.subrogate_key, current_date as date_from, date'2099-12-31' as date_to, t.is_current, t.audit_datetime
+        INSERT INTO "{redshift_schema}".analytics_dim_tickers (
+            ticker, 
+            asset_type, 
+            name, country, 
+            sector,
+            industry,
+            address, 
+            official_site,
+            analyst_rating,
+            subrogate_key, 
+            date_from, 
+            date_to, 
+            is_current, 
+            audit_datetime
+        )
+        SELECT 
+            t.ticker, 
+            t.asset_type, 
+            t.name, 
+            t.country, 
+            t.sector,
+            t.industry,
+            t.address,
+            t.official_site,
+            t.analyst_rating, 
+            t.subrogate_key, 
+            current_date as date_from, 
+            date'2099-12-31' as date_to, 
+            t.is_current, 
+            t.audit_datetime
         FROM temp_dim_tickers as t
         WHERE NOT EXISTS (SELECT 1 FROM "{redshift_schema}".analytics_dim_tickers d WHERE d.subrogate_key = t.subrogate_key);
 
@@ -135,5 +162,3 @@ def load_dimension_data():
         print(f"Could not refresh data {e} \n")
         connection.close()
         sys.exit("End of process")
-
-load_dimension_data()

@@ -6,12 +6,11 @@ import pandas as pd
 import sys
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, '../utils'))
+project_root = os.path.join(current_dir, '..')
+sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def extract_intraday_data():
-
-    # DEFINICION DE LA CONEXION A REDSHIFT #
 
     twelve_url = db_utils.import_api_variables()['twelve_url']
     twelve_key = db_utils.import_api_variables()['twelve_key']
@@ -55,6 +54,8 @@ def transform_intradiary_data():
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
+    
+    # QUERY PARA OBTENER DF QUE PERMITE DETERMINAR SI ES CARGA HISTORICA O INCREMENTAL #S
 
     is_incremental = f"""select ticker, max(event_datetime) as last_event_datetime from "{redshift_schema}".staging_intraday_tickers group by 1"""
     max_staging_datetime_df = pd.read_sql(is_incremental, connection)
@@ -96,5 +97,3 @@ def load_intradiary_data():
     else:
 
         print(f"No new information to upload\n")
-
-load_intradiary_data()

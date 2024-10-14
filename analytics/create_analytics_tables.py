@@ -4,10 +4,11 @@
 import sys
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, '../utils'))
+project_root = os.path.join(current_dir, '..')
+sys.path.append(project_root)
 import utils.db_utils as db_utils
 
-def create_staging_tables():
+def create_analytics_tables():
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()

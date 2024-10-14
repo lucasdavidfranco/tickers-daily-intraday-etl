@@ -4,7 +4,8 @@
 import os
 import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, '../utils'))
+project_root = os.path.join(current_dir, '..')
+sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def create_staging_tables():
