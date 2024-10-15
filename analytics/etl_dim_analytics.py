@@ -155,6 +155,7 @@ def load_dimension_data():
     try:
         
         connection.execute(update_query)
+        print("Data uploaded to analytics dimension")
         connection.close()
 
     except Exception as e:

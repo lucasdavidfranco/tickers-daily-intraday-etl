@@ -87,6 +87,7 @@ def load_intradiary_data():
         try:
             
             ticker_dataframe_final.to_sql('staging_intraday_tickers', con = connection, index=False, if_exists='append', method='multi', schema = redshift_schema)
+            print("Data uploaded to staging intradiary")
 
         except Exception as e:
                 

@@ -85,6 +85,7 @@ def etl_intradiary_analytics():
     try:
         
         connection.execute(insert_intradiary_data)
+        print("Data uploaded to analytics intradiary")
 
     except Exception as e:
                 
@@ -139,8 +140,9 @@ def etl_daily_analytics():
                 lag(s.close_value) over (partition by s.ticker order by s.event_date) as previous_close_value,
                 case 
                     when s.event_date > coalesce(d.last_event_date, cast('2000-01-01' as date)) then 1
-                    else 0) as update_flag
-            from "{redshift_schema}".staging_intraday_tickers as s
+                    else 0
+                end as update_flag
+            from "{redshift_schema}".staging_daily_tickers as s
             left join last_updated_at as d on s.ticker = d.ticker
             where s.event_date >= coalesce(d.last_event_date_window, cast('2000-01-01' as date))
         )
@@ -167,6 +169,7 @@ def etl_daily_analytics():
     try:
         
         connection.execute(insert_daily_data)
+        print("Data uploaded to analytics daily")
 
     except Exception as e:
                 
