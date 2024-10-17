@@ -33,7 +33,7 @@ def import_api_variables():
     alpha_key = os.getenv('ALPHA_KEY')
     twelve_url = "https://api.twelvedata.com/time_series"
     twelve_key = os.getenv('TWELVE_KEY')
-    tickers = ['XOM'] #['XOM', 'CVX', 'SHEL', 'JPM', 'BAC', 'WFC']
+    tickers = ['XOM','CVX'] #['XOM', 'CVX', 'SHEL', 'JPM', 'BAC', 'WFC']
 
     return {
         'alpha_url': alpha_url,

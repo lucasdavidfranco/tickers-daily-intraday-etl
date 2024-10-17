@@ -33,7 +33,7 @@ def extract_intraday_data():
         print(f"Getting data for {ticker}\n")
         ticker_params['symbol'] = ticker
         ticker_response = requests.get(twelve_url, params = ticker_params)
-                
+        
         if ticker_response.status_code == 200:  # VERIFICAMOS CONEXION CORRECTA A LA API # 
 
             raw_json = ticker_response.json()
@@ -48,6 +48,7 @@ def extract_intraday_data():
             sys.exit("End of process")
                 
     ticker_dataframe_final = pd.concat(dataframe_append, ignore_index = True)
+    ticker_dataframe_final.columns = ['event_datetime', 'open_value', 'high_value', 'low_value', 'close_value', 'volume_amount', 'ticker']
     return ticker_dataframe_final
 
 def transform_intradiary_data():
@@ -63,7 +64,6 @@ def transform_intradiary_data():
     # TRANSFORMACIONES A LA RAW DATA PARA OBTENER UN DATAFRAME CON COLUMNAS DESEADAS Y FORMATO DESEADO # 
 
     ticker_dataframe = extract_intraday_data()
-    ticker_dataframe.columns = ['event_datetime', 'open_value', 'high_value', 'low_value', 'close_value', 'volume_amount', 'ticker']
     numeric_columns = ['open_value', 'high_value', 'low_value', 'close_value', 'volume_amount']
     ticker_dataframe.loc[:, numeric_columns] = ticker_dataframe[numeric_columns].apply(pd.to_numeric, errors = 'coerce')
     ticker_dataframe['event_datetime'] = pd.to_datetime(ticker_dataframe['event_datetime'])
