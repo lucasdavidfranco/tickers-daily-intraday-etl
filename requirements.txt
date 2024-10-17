@@ -26,7 +26,7 @@ python-slugify==8.0.1
 pytimeparse==1.1.8
 pytz==2023.3
 PyYAML==6.0
-redis==5.0.0  # Agregué la dependencia de Redis
+redis==5.0.0
 requests==2.32.3
 requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
