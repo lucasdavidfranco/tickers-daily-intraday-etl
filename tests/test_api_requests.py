@@ -1,6 +1,6 @@
 
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import pandas as pd
 import sys
 import os
@@ -57,15 +57,21 @@ def test_extract_intraday_data(mock_get, mock_import_api_variables):
         pytest.fail(f"Error al ejecutar extract_intraday_data: {e}")
 
 
+@patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_api_variables')
 @patch('staging.etl_staging_daily.requests.get')
-def test_extract_daily_data(mock_get, mock_import_api_variables):
+def test_extract_daily_data(mock_get, mock_import_api_variables, mock_connect_to_redshift):
     
     mock_import_api_variables.return_value = {
         'alpha_url': 'alpha_url',
         'alpha_key': 'alpha_key',
-        'tickers': ['AAPL']
+        'tickers': ['AAPL'],
+        'redshift_schema': 'fake_schema'
     }
+    
+    mock_connection = MagicMock()
+    mock_connect_to_redshift.return_value = mock_connection
+    mock_connection.execute.return_value.fetchone.return_value = [None]  # Simula que no hay datos en la tabla
     
     mock_get.return_value.status_code = 200
     
