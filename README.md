@@ -2,12 +2,16 @@
 
 ## Contents
 1. [Introduction](#introduction)
-2. [Configuration](#configuration)
-3. [Autors](#autors)
+2. [Project structure](#project_structure)
+3. [Project pipeline](#project_pipeline)
+4. [Project tests](#project_tests)
+5. [Project setup](#configuration)
+5. [Autors](#autors)
 
 ## Introduction
 
 This github-repository execute an ETL (Extract, Transform and Load) process which consists on getting stocks market data from https://www.alphavantage.co/ and https://twelvedata.com/ through API requests and then uploading this data to staging tables which are used to execute more complex transformation and get analytics tables. Tools involved in this ETL are Apache Airflow, APIs, Docker, Python and Redshift.
+Final result is to obtain analytics data to analyze daily or intradiary stock values (open_value, high_value, low_value, close_value, volume_amount) by date or datetime (depending on the table) and also more complex metrics such as slowly moving average metrics based on 5 previous records, previous metric value as of to calculate deviation vs previous value
 
 ## Project structure 
 
@@ -31,24 +35,24 @@ This github-repository execute an ETL (Extract, Transform and Load) process whic
 
 It is the first layer of our project. On this layer this tasks are performed: 
 
-- create_staging_tables.py: Creates necessary tables if they do not exit
-- etl_staging_daily.py: Gets data from Alphavantage API through requests and performs necessary transformations and uploads to staging daily table
-- etl_staging_intradiary.py: Gets data from Twelve Data API through requests and performs necessary transformations and upload to staging intradiary table
+- create_staging_tables.py: Checks table existence and creates necessary tables if they do not exit
+- etl_staging_daily.py: Gets data from Alphavantage API through requests. Then performs necessary transformations and filter data to process only incremental data or historical if it is the first time to upload that ticker. After that using a SQL Alchemy engine uploads final processed data to staging daily table. Data uploaded consists on ticker, open_value, close_value, high_value, low_value, volume_amount, audit_datetime (timestamp of record upload) and event_date
+- etl_staging_intradiary.py: Gets data from Alphavantage API through requests. Then performs necessary transformations and filter data to process only incremental data or historical if it is the first time to upload that ticker. After that using a SQL Alchemy engine uploads final processed data to staging intradiary table. Data uploaded consists on ticker, open_value, close_value, high_value, low_value, volume_amount, audit_datetime (timestamp of record upload) and event_datetime
 
 ### Analytics:
 
 On this layer this tasks are performed more complex transformation with business logic: 
 
-- create_analytics_tables.py: Creates necessary tables if they do not exit
-- etl_dim_analytics.py: Gets data from Alphavantage API through requests and performs necessary transformations and uploads to analytics dimensional table
-- etl_fact_analytics.py: Gets data from staging table and performs several transformations to calculate new metrics such as slowly moving average on certain metrics or previous data value to calculate deviations
+- create_analytics_tables.py: Checks table existence and creates necessary tables if they do not exit
+- etl_dim_analytics.py: Gets data from Alphavantage API through requests. Then performs necessary transformations. After that using a SQL Alchemy it uploads to analytics dimensional table new updates of tickers if there are and changes is_current flag to old ticker dimension data. If there are no updates, it keeps dimensions with no changes. It has a SCD-2 structure 
+- etl_fact_analytics.py: Gets data from staging table and performs several transformations to calculate new metrics such as slowly moving average on certain metrics or previous data value to calculate deviations. This ETL perform an incremental upload so as to avoid duplication or avoid calculate all history every day
 
 ### Tasks: 
 
 This package is used to sort staging and analytics functions to be used on DAG definition.
 
 - staging_run: Sets to run functions in this order. Create tables, upload intradiary data, upload daily data
-- analytics_run: Sets to run functions in this order. Create tables, fact analytics etl, dim analytics elt
+- analytics_run: Sets to run functions in this order. Create tables, fact analytics etl, dim analytics etl
 
 ### Dags:
 
@@ -72,8 +76,6 @@ Several tests are performed to check functions of the ETL process
 - test_transform_dimension_data: We check that info retrived by API request is correctly transformed and delivers desired output for upload
 - test_load_dimension_data: We check that info delivered by transform data is correctly executed to_sql function
 - test_etl_analytics_data: We check that connection is set and is executed each table ETL
-
-![alt text](Analytics_model.png)
 
 ## Project setup
 
