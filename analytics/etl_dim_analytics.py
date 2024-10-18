@@ -1,6 +1,4 @@
 
-# IMPORTACION BIBLIOTECAS REQUERIDAS # 
-
 import requests
 import pandas as pd
 import sys
@@ -29,7 +27,7 @@ def extract_dimension_data():
         ticker_params['symbol'] = ticker
         ticker_response = requests.get(alpha_url, params = ticker_params)
                 
-        if ticker_response.status_code == 200:  # VERIFICAMOS CONEXION CORRECTA A LA API # 
+        if ticker_response.status_code == 200:
 
             raw_json = ticker_response.json()
             ticker_dataframe = pd.DataFrame.from_dict(raw_json, orient='index').T
@@ -116,6 +114,13 @@ def load_dimension_data():
         FROM temp_dim_tickers
         WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
         AND "{redshift_schema}".analytics_dim_tickers.subrogate_key != temp_dim_tickers.subrogate_key;
+        
+        UPDATE "{redshift_schema}".analytics_dim_tickers
+        SET
+            audit_datetime = temp_dim_tickers.audit_datetime
+        FROM temp_dim_tickers
+        WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
+        AND "{redshift_schema}".analytics_dim_tickers.subrogate_key = temp_dim_tickers.subrogate_key;
 
         INSERT INTO "{redshift_schema}".analytics_dim_tickers (
             ticker, 
@@ -155,11 +160,11 @@ def load_dimension_data():
     try:
         
         connection.execute(update_query)
-        print("Data uploaded to analytics dimension")
+        print("Table analytics_dim_tickers up to date")
         connection.close()
 
     except Exception as e:
             
-        print(f"Could not refresh data {e} \n")
+        print(f"Could not update analytics_dim_tickers: {e} \n")
         connection.close()
         sys.exit("End of process")

@@ -102,3 +102,5 @@ def create_analytics_tables():
 
         connection.execute(create_table_query)
         print("Table analytics_dim_tickers was created correctly\n")
+    
+    connection.close()

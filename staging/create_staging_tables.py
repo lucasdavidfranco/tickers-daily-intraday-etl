@@ -60,3 +60,5 @@ def create_staging_tables():
         
         connection.execute(create_table_query)
         print("Table staging_intraday_tickers was created correctly\n")
+    
+    connection.close

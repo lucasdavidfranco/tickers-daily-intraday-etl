@@ -87,14 +87,16 @@ def load_intradiary_data():
         try:
             
             ticker_dataframe_final.to_sql('staging_intraday_tickers', con = connection, index=False, if_exists='append', method='multi', schema = redshift_schema)
-            print("Data uploaded to staging intradiary")
+            print("Table staging_intraday_tickers up to date. New records added")
+            connection.close()
 
         except Exception as e:
                 
-            print(f"Could not upload data to staging intraday table: {e}\n")
+            print(f"Could not update staging_intraday_tickers: {e}\n")
             connection.close()
             sys.exit("End of process")
         
     else:
 
-        print(f"No new information to upload\n")
+        print(f"Table staging_intraday_tickers up to date. No new information to upload\n") 
+        connection.close()

@@ -1,6 +1,4 @@
 
-# IMPORTACION BIBLIOTECAS REQUERIDAS # 
-
 import pandas as pd
 import requests
 import sys
@@ -18,16 +16,12 @@ def extract_daily_data():
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
         
-    # VARIABLES DE LA API DE TICKERS # 
-
     ticker_params = {
         'function': 'TIME_SERIES_DAILY',
         'apikey': alpha_key
     }
 
-    dataframe_append = [] # AQUI UNIREMOS LOS RESULTADOS DE CADA REQUEST PARA HACER SOLO 1 CARGA POR VEZ A LA TABLA REDSHIFT #
-
-    # ITERACION PARA PODER CORRER MULTIPLES REQUESTS (1 POR TICKER) #
+    dataframe_append = [] 
 
     for ticker in tickers:
         
@@ -47,7 +41,7 @@ def extract_daily_data():
 
         ticker_response = requests.get(alpha_url, params = ticker_params)
         
-        if ticker_response.status_code == 200:  # VERIFICAMOS CONEXION CORRECTA A LA API # 
+        if ticker_response.status_code == 200:
 
                 raw_json = ticker_response.json()
                 raw_info = raw_json.get('Time Series (Daily)', {})
@@ -70,14 +64,10 @@ def transform_daily_data():
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
-    
-    # QUERY PARA OBTENER DF QUE PERMITE DETERMINAR SI ES CARGA HISTORICA O INCREMENTAL #S
 
     is_incremental = f"""select ticker, max(event_date) as last_event_date from "{redshift_schema}".staging_daily_tickers group by 1"""
     max_staging_date_df = pd.read_sql(is_incremental, connection)
         
-    # TRANSFORMACIONES A LA RAW DATA PARA OBTENER UN DATAFRAME CON COLUMNAS DESEADAS Y FORMATO DESEADO # 
-
     ticker_dataframe = extract_daily_data()
     numeric_columns = ['open_value', 'high_value', 'low_value', 'close_value', 'volume_amount']
     ticker_dataframe.loc[:, numeric_columns] = ticker_dataframe[numeric_columns].apply(pd.to_numeric, errors = 'coerce')
@@ -101,14 +91,16 @@ def load_daily_data():
         try:
             
             ticker_dataframe_final.to_sql('staging_daily_tickers', con = connection, index=False, if_exists='append', method='multi', schema = redshift_schema)
-            print("Data uploaded to staging daily")
+            print("Table staging_daily_tickers up to date. New records added")
+            connection.close()
 
         except Exception as e:
                 
-            print(f"Could not upload data to staging daily table: {e}\n")
+            print(f"Could not update staging_daily_tickers: {e}\n")
             connection.close()
             sys.exit("End of process")
         
     else:
 
-        print(f"No new information to upload\n")
+        print(f"Table staging_daily_tickers up to date. No new information to upload\n")
+        connection.close()
