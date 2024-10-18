@@ -76,95 +76,95 @@ def load_dimension_data():
     connection = db_utils.connect_to_redshift()
     ticker_dataframe_final = transform_dimension_data()
    
-    create_temp_table_query = """
-        CREATE TEMPORARY TABLE temp_dim_tickers (
-                ticker VARCHAR(10), 
-                asset_type VARCHAR(50), 
-                name VARCHAR(50),
-                country VARCHAR(10),
-                sector VARCHAR(50),
-                industry VARCHAR(50),
-                address VARCHAR(50),
-                official_site VARCHAR(50),
-                analyst_rating VARCHAR(30),
-                subrogate_key VARCHAR(50),
-                is_current DOUBLE PRECISION,
-                audit_datetime TIMESTAMP
-        );
-    """
+    queries = {
+        "create_temp_table_query": """
+            CREATE TEMPORARY TABLE temp_dim_tickers (
+                    ticker VARCHAR(10), 
+                    asset_type VARCHAR(50), 
+                    name VARCHAR(50),
+                    country VARCHAR(10),
+                    sector VARCHAR(50),
+                    industry VARCHAR(50),
+                    address VARCHAR(50),
+                    official_site VARCHAR(50),
+                    analyst_rating VARCHAR(30),
+                    subrogate_key VARCHAR(50),
+                    is_current DOUBLE PRECISION,
+                    audit_datetime TIMESTAMP
+            );
+        """,
+        "replace_old_dimensions": f"""
+            UPDATE "{redshift_schema}".analytics_dim_tickers
+            SET
+                date_to = dateadd('day', -1, current_date),
+                is_current = 0,
+                audit_datetime = temp_dim_tickers.audit_datetime
+            FROM temp_dim_tickers
+            WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
+            AND "{redshift_schema}".analytics_dim_tickers.subrogate_key != temp_dim_tickers.subrogate_key;
+        """,
+        "update_last_refresh": f"""
+            UPDATE "{redshift_schema}".analytics_dim_tickers
+            SET
+                audit_datetime = temp_dim_tickers.audit_datetime
+            FROM temp_dim_tickers
+            WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
+            AND "{redshift_schema}".analytics_dim_tickers.subrogate_key = temp_dim_tickers.subrogate_key;
+        """,
+        "insert_new_dimensions": f"""
+            INSERT INTO "{redshift_schema}".analytics_dim_tickers (
+                ticker, 
+                asset_type, 
+                name, country, 
+                sector,
+                industry,
+                address, 
+                official_site,
+                analyst_rating,
+                subrogate_key, 
+                date_from, 
+                date_to, 
+                is_current, 
+                audit_datetime
+            )
+            SELECT 
+                t.ticker, 
+                t.asset_type, 
+                t.name, 
+                t.country, 
+                t.sector,
+                t.industry,
+                t.address,
+                t.official_site,
+                t.analyst_rating, 
+                t.subrogate_key, 
+                current_date as date_from, 
+                date'2099-12-31' as date_to, 
+                t.is_current, 
+                t.audit_datetime
+            FROM temp_dim_tickers as t
+            WHERE NOT EXISTS (SELECT 1 FROM "{redshift_schema}".analytics_dim_tickers d WHERE d.subrogate_key = t.subrogate_key);
+        """
+    }
+   
+    for query_name, query_definition in queries.items():
+        
+        try:
+        
+            if query_name == 'create_temp_table_query':
 
-    try:
-        
-        connection.execute(create_temp_table_query)
-        ticker_dataframe_final.to_sql(name = 'temp_dim_tickers', con = connection, schema = None, index=False, if_exists='append')
-        
-    except Exception as e:
+                connection.execute(query_definition)
+                ticker_dataframe_final.to_sql(name = 'temp_dim_tickers', con = connection, schema = None, index=False, if_exists='append')
             
-        print(f"Could not upload data to temporary table: {e}\n")
-        connection.close()
-        sys.exit("End of process")
-
-    update_query = f"""
-
-        UPDATE "{redshift_schema}".analytics_dim_tickers
-        SET
-            date_to = dateadd('day', -1, current_date),
-            is_current = 0,
-            audit_datetime = temp_dim_tickers.audit_datetime
-        FROM temp_dim_tickers
-        WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
-        AND "{redshift_schema}".analytics_dim_tickers.subrogate_key != temp_dim_tickers.subrogate_key;
+            else:
+                
+                connection.execute(query_definition)
         
-        UPDATE "{redshift_schema}".analytics_dim_tickers
-        SET
-            audit_datetime = temp_dim_tickers.audit_datetime
-        FROM temp_dim_tickers
-        WHERE "{redshift_schema}".analytics_dim_tickers.ticker = temp_dim_tickers.ticker 
-        AND "{redshift_schema}".analytics_dim_tickers.subrogate_key = temp_dim_tickers.subrogate_key;
-
-        INSERT INTO "{redshift_schema}".analytics_dim_tickers (
-            ticker, 
-            asset_type, 
-            name, country, 
-            sector,
-            industry,
-            address, 
-            official_site,
-            analyst_rating,
-            subrogate_key, 
-            date_from, 
-            date_to, 
-            is_current, 
-            audit_datetime
-        )
-        SELECT 
-            t.ticker, 
-            t.asset_type, 
-            t.name, 
-            t.country, 
-            t.sector,
-            t.industry,
-            t.address,
-            t.official_site,
-            t.analyst_rating, 
-            t.subrogate_key, 
-            current_date as date_from, 
-            date'2099-12-31' as date_to, 
-            t.is_current, 
-            t.audit_datetime
-        FROM temp_dim_tickers as t
-        WHERE NOT EXISTS (SELECT 1 FROM "{redshift_schema}".analytics_dim_tickers d WHERE d.subrogate_key = t.subrogate_key);
-
-    """
-    
-    try:
-        
-        connection.execute(update_query)
-        print("Table analytics_dim_tickers up to date")
-        connection.close()
-
-    except Exception as e:
-            
-        print(f"Could not update analytics_dim_tickers: {e} \n")
-        connection.close()
-        sys.exit("End of process")
+        except Exception as e:
+                
+            print(f"Could not update analytics_dim_tickers: {e} \n")
+            connection.close()
+            sys.exit("End of process")
+   
+    print("Table analytics_dim_tickers up to date")
+    connection.close()

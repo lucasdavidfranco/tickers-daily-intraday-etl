@@ -2,6 +2,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
+from datetime import timedelta
 import sys
 import os
 
@@ -13,13 +14,17 @@ from tasks.staging_run import staging_run
 
 default_args = {
     'owner': 'airflow',
-    'start_date': days_ago(0)
+    "depends_on_past": False,
+    'start_date': days_ago(1),
+    "retries": 1,
+    "retry_delay": timedelta(minutes=10)
 }
 
 with DAG(
     'tickers-etl-dag', 
     default_args=default_args, 
-    schedule_interval='@daily'
+    schedule_interval='0 21 * * 1-5',
+    catchup=False
 ) as dag:
     
     staging_task = PythonOperator(

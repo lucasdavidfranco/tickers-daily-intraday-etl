@@ -42,8 +42,6 @@ def test_transform_intraday_data(mock_read_sql, mock_extract_intraday_data, mock
 
     try:
         result = transform_intradiary_data()
-        print(result)
-
         assert not result.empty
         assert 'ticker' in result.columns
         assert 'event_datetime' in result.columns
@@ -55,7 +53,7 @@ def test_transform_intraday_data(mock_read_sql, mock_extract_intraday_data, mock
         assert pd.to_datetime(result['event_datetime']).max() > pd.Timestamp('2020-02-26 15:58:00')
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_intradiary_data: {e}")
+        pytest.fail(f"Error al ejecutar transform_intradiary_data: {e}")
 
 
 @patch('utils.db_utils.connect_to_redshift')
@@ -88,8 +86,6 @@ def test_transform_daily_data(mock_read_sql, mock_extract_daily_data, mock_impor
 
     try:
         result = transform_daily_data()
-        print(result)
-
         assert not result.empty
         assert 'ticker' in result.columns
         assert 'event_date' in result.columns
@@ -101,7 +97,7 @@ def test_transform_daily_data(mock_read_sql, mock_extract_daily_data, mock_impor
         assert pd.to_datetime(result['event_date']).max() > pd.Timestamp('2024-10-15')
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_daily_data: {e}")
+        pytest.fail(f"Error al ejecutar transform_daily_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

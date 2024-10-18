@@ -95,7 +95,7 @@ def test_extract_daily_data(mock_get, mock_import_api_variables):
         assert 'AnalystRatingStrongSell' in result.columns
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_daily_data: {e}")
+        pytest.fail(f"Error al ejecutar extract_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

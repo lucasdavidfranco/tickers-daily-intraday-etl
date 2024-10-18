@@ -12,16 +12,9 @@ def create_analytics_tables():
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
-    
-    try:
-        
-        table_existence = f"""select 1 from "{redshift_schema}".analytics_fact_daily_detail_tickers"""
-        connection.execute(table_existence)
-        print("Table analytics_fact_daily_detail_tickers is already created\n")
-        
-    except Exception as e:
-        
-        create_table_query = f"""
+
+    tables = {
+        "analytics_fact_daily_detail_tickers": f"""
             CREATE TABLE IF NOT EXISTS "{redshift_schema}".analytics_fact_daily_detail_tickers (
                 event_datetime TIMESTAMP,
                 ticker VARCHAR(10),
@@ -38,20 +31,8 @@ def create_analytics_tables():
                 minute_close_value_variation DOUBLE PRECISION,
                 audit_datetime TIMESTAMP
         );
-        """
-
-        connection.execute(create_table_query)
-        print("Table analytics_fact_daily_detail_tickers was created correctly\n")
-        
-    try:
-        
-        table_existence = f"""select 1 from "{redshift_schema}".analytics_fact_daily_summary_tickers"""
-        connection.execute(table_existence)
-        print("Table analytics_fact_daily_summary_tickers is already created\n")
-        
-    except Exception as e:
-        
-        create_table_query = f"""
+        """,
+        "analytics_fact_daily_summary_tickers": f"""
             CREATE TABLE IF NOT EXISTS "{redshift_schema}".analytics_fact_daily_summary_tickers (
                 event_date DATE,
                 ticker VARCHAR(10),
@@ -68,20 +49,8 @@ def create_analytics_tables():
                 daily_close_value_variation DOUBLE PRECISION,
                 audit_datetime TIMESTAMP
         );
-        """
-        
-        connection.execute(create_table_query)
-        print("Table analytics_fact_daily_summary_tickers was created correctly\n")
-        
-    try:
-        
-        table_existence = f"""select 1 from "{redshift_schema}".analytics_dim_tickers"""
-        connection.execute(table_existence)
-        print("Table analytics_dim_tickers is already created\n")
-        
-    except Exception as e:
-        
-        create_table_query = f"""
+        """, 
+        "analytics_dim_tickers": f"""
             CREATE TABLE IF NOT EXISTS "{redshift_schema}".analytics_dim_tickers (
                 ticker VARCHAR(10), 
                 asset_type VARCHAR(50), 
@@ -98,9 +67,21 @@ def create_analytics_tables():
                 is_current DOUBLE PRECISION,
                 audit_datetime TIMESTAMP
         );
-        """
-
-        connection.execute(create_table_query)
-        print("Table analytics_dim_tickers was created correctly\n")
+        """ 
+    }
     
+    for table_name, create_query in tables.items():
+        
+        check_table_query = f"""select 1 from information_schema.tables where table_schema = '{redshift_schema}' and table_name = '{table_name}'"""
+        exists_table = connection.execute(check_table_query).fetchone()
+        
+        if exists_table is not None:
+        
+            print(f"Table {table_name} is already created\n")
+    
+        else:
+            
+            connection.execute(create_query)
+            print(f"Table {table_name} was created correctly\n")
+
     connection.close()

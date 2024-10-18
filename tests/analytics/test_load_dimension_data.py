@@ -41,11 +41,14 @@ def test_load_dimension_data(mock_to_sql, mock_transform_dimension_data, mock_co
 
     load_dimension_data()
     
-    mock_connect_to_redshift.assert_called_once()
-    mock_to_sql.assert_called_once()
-    mock_connection.execute.assert_called()
-    assert "INSERT INTO" in str(mock_connection.execute.call_args[0][0])
-
+    try:
+        mock_connect_to_redshift.assert_called_once()
+        mock_to_sql.assert_called_once()
+        mock_connection.execute.assert_called()
+        assert "INSERT INTO" in str(mock_connection.execute.call_args[0][0])
+    
+    except Exception as e:
+        pytest.fail(f"Error al ejecutar test load_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()
