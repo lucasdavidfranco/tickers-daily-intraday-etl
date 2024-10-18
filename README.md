@@ -25,6 +25,8 @@ This github-repository execute an ETL (Extract, Transform and Load) process whic
 ├── requirements.txt      # Project dependencies
 ```
 
+## Project pipeline 
+
 ### Staging:
 
 It is the first layer of our project. On this layer this tasks are performed: 
@@ -48,11 +50,30 @@ This package is used to sort staging and analytics functions to be used on DAG d
 - staging_run: Sets to run functions in this order. Create tables, upload intradiary data, upload daily data
 - analytics_run: Sets to run functions in this order. Create tables, fact analytics etl, dim analytics elt
 
-### DAGS:
+### Dags:
 
 Here is defined main airflow configuration such as trigger, retry, dependencies
 By default it is set a daily trigger from Monday to Friday at 21:00 GMT-00:00
 It is also set that staging_run preceeds analytics_run and has 1 retry configuration
+
+## Project tests 
+
+Several tests are performed to check functions of the ETL process
+
+### Staging:
+
+- test_extract_staging_data: We check that API function works as we expect and delivers proper output for transformation
+- test_transform_staging_data: We check that info retrived by API request is correctly transformed and delivers desired output for upload
+- test_load_staging_data: We check that info delivered by transform data is correctly executed to_sql function if there is info to upload and if there are no updates, it checks that connection is closed
+
+### Analytics:
+
+- test_extract_dimension_data: We check that API function works as we expect and delivers proper output for transformation
+- test_transform_dimension_data: We check that info retrived by API request is correctly transformed and delivers desired output for upload
+- test_load_dimension_data: We check that info delivered by transform data is correctly executed to_sql function
+- test_etl_analytics_data: We check that connection is set and is executed each table ETL
+
+![alt text](Analytics_model.png)
 
 ## Project setup
 
