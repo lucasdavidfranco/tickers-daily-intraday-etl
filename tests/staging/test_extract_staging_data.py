@@ -6,7 +6,7 @@ import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.join(current_dir, '..')
+project_root = os.path.join(current_dir, '../..')
 sys.path.append(project_root)
 
 from staging.etl_staging_intradiary import extract_intraday_data
@@ -59,13 +59,17 @@ def test_extract_intraday_data(mock_get, mock_import_api_variables):
 
 @patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_api_variables')
+@patch('utils.db_utils.import_db_variables')
 @patch('staging.etl_staging_daily.requests.get')
-def test_extract_daily_data(mock_get, mock_import_api_variables, mock_connect_to_redshift):
+def test_extract_daily_data(mock_get, mock_import_db_variables, mock_import_api_variables, mock_connect_to_redshift):
     
     mock_import_api_variables.return_value = {
         'alpha_url': 'alpha_url',
         'alpha_key': 'alpha_key',
-        'tickers': ['AAPL'],
+        'tickers': ['AAPL']
+    }
+    
+    mock_import_db_variables.return_value = {
         'redshift_schema': 'fake_schema'
     }
     

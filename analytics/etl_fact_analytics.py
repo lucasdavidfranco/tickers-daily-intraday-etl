@@ -1,6 +1,4 @@
 
-# IMPORTACION BIBLIOTECAS REQUERIDAS # 
-
 import sys
 import os 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -9,9 +7,7 @@ sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def etl_intradiary_analytics():
-    
-    # CREACION DE FACT TABLE A PARTIR DE STAGING INTRADIARIO # 
-    
+        
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
     
@@ -85,20 +81,20 @@ def etl_intradiary_analytics():
     try:
         
         connection.execute(insert_intradiary_data)
-        print("Data uploaded to analytics intradiary")
+        print("Table analytics_fact_daily_detail_tickers up to date")
+        connection.close
 
     except Exception as e:
                 
-        print(f"Could not upload intraday incremental data to analytics fact detail table: {e}\n")
-        sys.exit("End of process")
+        print(f"Could not update analytics_fact_daily_detail_tickers: {e}\n")
+        connection.close()
+    
 
 def etl_daily_analytics():
-    
-    # CREACION DE FACT TABLE A PARTIR DE STAGING DIARIO # 
-    
+        
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
-    
+       
     insert_daily_data = f"""
 
         INSERT INTO "{redshift_schema}".analytics_fact_daily_summary_tickers (
@@ -167,11 +163,12 @@ def etl_daily_analytics():
     """
 
     try:
-        
+            
         connection.execute(insert_daily_data)
-        print("Data uploaded to analytics daily")
+        print("Table analytics_fact_daily_summary_tickers up to date.")
+        connection.close()
 
     except Exception as e:
-                
-        print(f"Could not upload daily incremental data to analytics fact detail table: {e}\n")
-        sys.exit("End of process")
+                    
+        print(f"Could not update analytics_fact_daily_summary_tickers: {e}\n")
+        connection.close()
