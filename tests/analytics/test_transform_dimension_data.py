@@ -72,8 +72,7 @@ def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
     
     mock_subrogate_key.return_value = 'fake_key'
     
-    result_df = transform_dimension_data()
-        
+    result_df = transform_dimension_data() 
     expected_columns = ['ticker', 'asset_type', 'name', 'country', 'sector', 'industry', 'address', 
         'official_site', 'analyst_rating', 'subrogate_key', 'is_current', 'audit_datetime']
        
@@ -81,7 +80,7 @@ def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
         assert all(column in result_df.columns for column in expected_columns)
 
     except Exception as e:
-        pytest.fail(f'Error al ejecutar extract_daily_data: {e}')
+        pytest.fail(f'Error al ejecutar transform_dimension_data: {e}')
 
 if __name__ == '__main__':
     pytest.main()

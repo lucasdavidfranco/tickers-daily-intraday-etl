@@ -37,15 +37,20 @@ def test_load_daily_data(mock_to_sql, mock_transform_daily_data, mock_import_db_
     })
     
     load_daily_data()
+    
+    try:
 
-    mock_to_sql.assert_called_once_with(
-        'staging_daily_tickers',
-        con=mock_connection,
-        index=False,
-        if_exists='append',
-        method='multi',
-        schema='fake_schema'
-    )
+        mock_to_sql.assert_called_once_with(
+            'staging_daily_tickers',
+            con=mock_connection,
+            index=False,
+            if_exists='append',
+            method='multi',
+            schema='fake_schema'
+        )
+        
+    except Exception as e:
+        pytest.fail(f"Error al ejecutar test load_daily_data: {e}")
     
 
 @patch('utils.db_utils.connect_to_redshift')
@@ -73,15 +78,20 @@ def test_load_intradiary_data(mock_to_sql, mock_transform_intradiary_data, mock_
     })
     
     load_intradiary_data()
+    
+    try:
 
-    mock_to_sql.assert_called_once_with(
-        'staging_intraday_tickers',
-        con=mock_connection,
-        index=False,
-        if_exists='append',
-        method='multi',
-        schema='fake_schema'
-    )
+        mock_to_sql.assert_called_once_with(
+            'staging_intraday_tickers',
+            con=mock_connection,
+            index=False,
+            if_exists='append',
+            method='multi',
+            schema='fake_schema'
+        )
+    
+    except Exception as e:
+        pytest.fail(f"Error al ejecutar test load_intraday_data: {e}")
     
     
 @patch('utils.db_utils.connect_to_redshift')
@@ -95,16 +105,17 @@ def test_load_daily_data_no_new_data(mock_transform_daily_data, mock_import_db_v
     
     mock_connection = MagicMock()
     mock_connect_to_redshift.return_value = mock_connection
-    
     mock_transform_daily_data.return_value = pd.DataFrame()
     
     load_daily_data()
-
-    assert mock_connection.close.call_count == 1
-
-if __name__ == "__main__":
-    pytest.main()
-
+    
+    try:
+        
+        assert mock_connection.close.call_count == 1
+    
+    except Exception as e:
+        pytest.fail(f"Error al ejecutar test load_daily_data_no_new_data: {e}")
+        
 
 @patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_db_variables')
@@ -117,12 +128,15 @@ def test_load_intradiary_data_no_new_data(mock_transform_intradiary_data, mock_i
     
     mock_connection = MagicMock()
     mock_connect_to_redshift.return_value = mock_connection
-    
     mock_transform_intradiary_data.return_value = pd.DataFrame()
     
     load_intradiary_data()
 
-    assert mock_connection.close.call_count == 1
+    try:
+        assert mock_connection.close.call_count == 1
+
+    except Exception as e:
+        pytest.fail(f"Error al ejecutar test load_intradiary_data_no_new_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

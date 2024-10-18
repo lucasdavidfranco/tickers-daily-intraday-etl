@@ -10,9 +10,7 @@ def analytics_run():
     
     create_analytics_tables.create_analytics_tables()
     
-    etl_fact_analytics.etl_intradiary_analytics()
-    
-    etl_fact_analytics.etl_daily_analytics()
+    etl_fact_analytics.etl_fact_analytics()
     
     etl_dim_analytics.load_dimension_data()
     

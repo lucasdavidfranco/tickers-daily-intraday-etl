@@ -54,8 +54,7 @@ def test_extract_intraday_data(mock_get, mock_import_api_variables):
         assert pd.to_datetime(result['event_datetime'], errors='coerce').notnull().all()
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_intraday_data: {e}")
-
+        pytest.fail(f"Error al ejecutar test extract_intraday_data: {e}")
 
 @patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_api_variables')
@@ -69,14 +68,10 @@ def test_extract_daily_data(mock_get, mock_import_db_variables, mock_import_api_
         'tickers': ['AAPL']
     }
     
-    mock_import_db_variables.return_value = {
-        'redshift_schema': 'fake_schema'
-    }
-    
+    mock_import_db_variables.return_value = {'redshift_schema': 'fake_schema'}
     mock_connection = MagicMock()
     mock_connect_to_redshift.return_value = mock_connection
-    mock_connection.execute.return_value.fetchone.return_value = [None]  # Simula que no hay datos en la tabla
-    
+    mock_connection.execute.return_value.fetchone.return_value = [None]
     mock_get.return_value.status_code = 200
     
     mock_get.return_value.json.return_value = {
@@ -108,7 +103,6 @@ def test_extract_daily_data(mock_get, mock_import_db_variables, mock_import_api_
     
     except Exception as e:
         pytest.fail(f"Error al ejecutar extract_daily_data: {e}")
-
 
 if __name__ == "__main__":
     pytest.main()

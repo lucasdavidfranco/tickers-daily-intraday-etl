@@ -12,29 +12,38 @@ import utils.db_utils as db_utils
 
 def extract_intraday_data():
 
+    ''' Gets data from twelvedata API
+    
+    First a connection is set to our redshift schema to check if first historical upload was made or not
+    
+    API requests last 25 days 
+    
+    Due to the fact that only one ticker can be requested in every api call, this process is iterated for every ticker using a for loop
+    
+    Once every ticker has been requested to the API, all data is concatenated on a final dataframe used in next step transform_daily_data
+    
+    If request can not be done, process ends with its error code 
+    
+    '''
+
     twelve_url = db_utils.import_api_variables()['twelve_url']
     twelve_key = db_utils.import_api_variables()['twelve_key']
     tickers = db_utils.import_api_variables()['tickers']
         
-    # VARIABLES DE LA API DE TICKERS # 
-
     ticker_params = {
         'apikey':  twelve_key,
         'interval': '1min',
         'outputsize': 5000
     } 
 
-    dataframe_append = [] # AQUI UNIREMOS LOS RESULTADOS DE CADA REQUEST PARA HACER SOLO 1 CARGA POR VEZ A LA TABLA REDSHIFT #
-
-    # ITERACION PARA PODER CORRER MULTIPLES REQUESTS (1 POR TICKER) #
+    dataframe_append = []
 
     for ticker in tickers:
         
-        print(f"Getting data for {ticker}\n")
         ticker_params['symbol'] = ticker
         ticker_response = requests.get(twelve_url, params = ticker_params)
         
-        if ticker_response.status_code == 200:  # VERIFICAMOS CONEXION CORRECTA A LA API # 
+        if ticker_response.status_code == 200:
 
             raw_json = ticker_response.json()
             raw_info = raw_json.get('values')
@@ -53,15 +62,23 @@ def extract_intraday_data():
 
 def transform_intradiary_data():
 
+    ''' Tranforms data retrieved from API
+    
+    Once we get the data, this is transformed using pandas
+    
+    We convert columns to numeric using pandas 
+    
+    Also we check on table which is last event datetime for each ticker to upload only new data (Incremental process)
+    
+    As of to not avoid uploading data that is already on table, we use pandas to filter data 
+    
+    '''
+
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
-    
-    # QUERY PARA OBTENER DF QUE PERMITE DETERMINAR SI ES CARGA HISTORICA O INCREMENTAL #S
 
     is_incremental = f"""select ticker, max(event_datetime) as last_event_datetime from "{redshift_schema}".staging_intraday_tickers group by 1"""
     max_staging_datetime_df = pd.read_sql(is_incremental, connection)
-        
-    # TRANSFORMACIONES A LA RAW DATA PARA OBTENER UN DATAFRAME CON COLUMNAS DESEADAS Y FORMATO DESEADO # 
 
     ticker_dataframe = extract_intraday_data()
     numeric_columns = ['open_value', 'high_value', 'low_value', 'close_value', 'volume_amount']
@@ -74,6 +91,18 @@ def transform_intradiary_data():
     return ticker_dataframe_filter
 
 def load_intradiary_data():
+    
+    ''' Load data retrieved from API
+    
+    Once we get the data filtered and in proper data types we upload it to redshift using SQL Alchemy engine
+    
+    Upload will only occur if transform dataframe is not null (after being filtered to only keep new records)
+    
+    If there is no new data to upload (api not updated or any other issue) no data is uploaded and you'll get this on Airflow log
+    
+    Also if new data is uploaded or there is an error you'll get this on Airflow log too.
+    
+    '''
         
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()

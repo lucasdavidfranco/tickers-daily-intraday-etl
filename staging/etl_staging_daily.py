@@ -9,6 +9,20 @@ sys.path.append(project_root)
 import utils.db_utils as db_utils
 
 def extract_daily_data():
+    
+    ''' Gets data from alphavantage API
+    
+    First a connection is set to our redshift schema to check if first historical upload was made or not
+    
+    With that input it uses as an api params COMPACT or FULL API request. Full requests is as of 2000-01-01
+    
+    Due to the fact that only one ticker can be requested in every api call, this process is iterated for every ticker using a for loop
+    
+    Once every ticker has been requested to the API, all data is concatenated on a final dataframe used in next step transform_daily_data
+    
+    If request can not be done, process ends with its error code 
+    
+    '''
 
     alpha_url = db_utils.import_api_variables()['alpha_url']
     alpha_key = db_utils.import_api_variables()['alpha_key']
@@ -25,7 +39,6 @@ def extract_daily_data():
 
     for ticker in tickers:
         
-        print(f"Getting data for {ticker}\n")
         ticker_params['symbol'] = ticker
         is_incremental = f"""select max(event_date) as q from "{redshift_schema}".staging_daily_tickers where ticker = '{ticker}'"""
         max_staging_date = connection.execute(is_incremental).fetchone()
@@ -61,6 +74,20 @@ def extract_daily_data():
     return ticker_dataframe_final
 
 def transform_daily_data():
+    
+    ''' Tranforms data retrieved from API
+    
+    Once we get the data, this is transformed using pandas
+    
+    We convert columns to numeric using pandas 
+    
+    Also we check on table which is last event date for each ticker to upload only new data (Incremental process)
+    
+    API request only allows us to request last 100 days (COMPACT) or full history. 
+    
+    As of to not avoid uploading data that is already on table, we use pandas to filter data 
+    
+    '''
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
@@ -78,6 +105,18 @@ def transform_daily_data():
     return ticker_dataframe_filter
 
 def load_daily_data():
+    
+    ''' Load data retrieved from API
+    
+    Once we get the data filtered and in proper data types we upload it to redshift using SQL Alchemy engine
+    
+    Upload will only occur if transform dataframe is not null (after being filtered to only keep new records)
+    
+    If there is no new data to upload (api not updated or any other issue) no data is uploaded and you'll get this on Airflow log
+    
+    Also if new data is uploaded or there is an error you'll get this on Airflow log too.
+    
+    '''
     
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
