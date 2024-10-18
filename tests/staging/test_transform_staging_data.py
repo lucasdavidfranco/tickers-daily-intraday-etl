@@ -18,6 +18,16 @@ from staging.etl_staging_daily import transform_daily_data
 @patch('pandas.read_sql')
 def test_transform_intraday_data(mock_read_sql, mock_extract_intraday_data, mock_import_db_variables, mock_connect_to_redshift):
     
+    '''
+    
+    Test transform intraday data
+    
+    We use unitttest and run a pytest to mock a fake redshift connection, read_sql and fake data retrieved from API
+    
+    Then we check if our fake data is processed as how we expected with assert validations
+    
+    '''
+    
     mock_import_db_variables.return_value = {
         'redshift_schema': 'fake_schema'
     }
@@ -53,7 +63,7 @@ def test_transform_intraday_data(mock_read_sql, mock_extract_intraday_data, mock
         assert pd.to_datetime(result['event_datetime']).max() > pd.Timestamp('2020-02-26 15:58:00')
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar transform_intradiary_data: {e}")
+        pytest.fail(f"Error when executing test transform_intradiary_data: {e}")
 
 
 @patch('utils.db_utils.connect_to_redshift')
@@ -61,6 +71,16 @@ def test_transform_intraday_data(mock_read_sql, mock_extract_intraday_data, mock
 @patch('staging.etl_staging_daily.extract_daily_data')
 @patch('pandas.read_sql')
 def test_transform_daily_data(mock_read_sql, mock_extract_daily_data, mock_import_db_variables, mock_connect_to_redshift):
+    
+    '''
+    
+    Test transform daily data
+    
+    We use unitttest and run a pytest to mock a fake redshift connection, read_sql and fake data retrieved from API
+    
+    Then we check if our fake data is processed as how we expected with assert validations
+    
+    '''
     
     mock_import_db_variables.return_value = {
         'redshift_schema': 'fake_schema'
@@ -97,7 +117,7 @@ def test_transform_daily_data(mock_read_sql, mock_extract_daily_data, mock_impor
         assert pd.to_datetime(result['event_date']).max() > pd.Timestamp('2024-10-15')
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar transform_daily_data: {e}")
+        pytest.fail(f"Error when executing test transform_daily_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

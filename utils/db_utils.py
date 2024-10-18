@@ -7,6 +7,14 @@ import sys
 
 def import_db_variables():
     
+    '''
+    
+    Import redshift database variables
+    
+    We get from an .env file all configurations of the database
+    
+    '''
+    
     load_dotenv()
     
     user = os.getenv('DB_USER')
@@ -27,13 +35,23 @@ def import_db_variables():
 
 def import_api_variables():
     
+    '''
+    
+    Import api variables
+    
+    We get from an .env file API keys to retrieve data. 
+    
+    Also on this function is set all tickers that will be processed on full ETL process
+    
+    '''
+    
     load_dotenv()
     
     alpha_url = "https://www.alphavantage.co/query"
     alpha_key = os.getenv('ALPHA_KEY')
     twelve_url = "https://api.twelvedata.com/time_series"
     twelve_key = os.getenv('TWELVE_KEY')
-    tickers = ['JPM'] #['XOM', 'CVX', 'SHEL', 'JPM', 'BAC', 'WFC']
+    tickers = ['JPM']
 
     return {
         'alpha_url': alpha_url,
@@ -44,6 +62,14 @@ def import_api_variables():
     }
 
 def connect_to_redshift():
+    
+    '''
+    
+    Connection to redshift
+    
+    We get a sql alchemy engine to perform all type of .sql scripts on our database 
+    
+    '''
     
     db_variables = import_db_variables()
     user = db_variables['user']
@@ -59,7 +85,7 @@ def connect_to_redshift():
         connection = engine.connect()
         connection_query = """SELECT schema_name FROM information_schema.schemata;"""
         connection.execute(connection_query)
-        return connection  # Retorna la conexión para poder usarla
+        return connection
 
     except Exception as e:
         
@@ -67,6 +93,14 @@ def connect_to_redshift():
         sys.exit("End of process")
 
 def subrogate_key(*cols):
+    
+    '''
+    
+    Subrogate key
+    
+    Hashes a record based on input columns to obtain a unique identifiers
+    
+    '''
     
     combined_str = ''.join(cols)
     return hashlib.sha1(combined_str.encode()).hexdigest()
