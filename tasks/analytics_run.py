@@ -8,6 +8,20 @@ from analytics import (create_analytics_tables , etl_fact_analytics, etl_dim_ana
 
 def analytics_run():
     
+    '''
+    
+    Analytics task set to run on airflow dag. 
+    
+    It runs after staging tasks and runs analytics ETL in following order 
+    
+    First checks if tables are created and creates them if not
+    
+    Then it runs analytics process to update fact tables 
+    
+    In the end runs dimension process from getting API data to update it on dimension table
+    
+    '''
+    
     create_analytics_tables.create_analytics_tables()
     
     etl_fact_analytics.etl_fact_analytics()

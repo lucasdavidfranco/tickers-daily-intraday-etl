@@ -8,6 +8,26 @@ import utils.db_utils as db_utils
 
 def etl_fact_analytics():
     
+    ''' Updates fact tables 
+    
+    Once we have all data on staging tables, this process is run to update analytics table with business logic
+    
+    For the upload 2 SQL scripts are run: 
+    
+    analytics_fact_daily_detail_tickers: To begin with this ETL, we retrieve last data available on this table
+    After this, data on staging table is filtered based on last analytics data to get only data that has not been processed and upload to analytics yet.
+    Once this is done several calculations are made such as previous values for a specific metric or SMA values (slowly moving average)
+    On script there is an auxiliary field update_flag. This is used due to the fact that some metrics needs to have 5 previous records to be calculated
+    Those records are retrived with last_event_datetime_window and then with upload_flag we filter those auxiliary records only brought to have calculations ok.
+    
+    analytics_fact_daily_summary_tickers: To begin with this ETL, we retrieve last data available on this table 
+    After this, data on staging table is filtered based on last analytics data to get only data that has not been processed and upload to analytics yet.
+    Once this is done several calculations are made such as previous values for a specific metric or SMA values (slowly moving average)
+    On script there is an auxiliary field update_flag. This is used due to the fact that some metrics needs to have 5 previous records to be calculated
+    Those records are retrived with last_event_date_window and then with upload_flag we filter those auxiliary records only brought to have calculations ok.
+    
+    '''
+    
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()
     

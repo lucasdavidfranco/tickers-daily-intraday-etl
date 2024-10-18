@@ -14,6 +14,16 @@ from analytics.etl_dim_analytics import extract_dimension_data
 @patch('staging.etl_staging_daily.requests.get')
 def test_extract_daily_data(mock_get, mock_import_api_variables):
     
+    '''
+    
+    Test extract dimension data
+    
+    We use unitttest and run a pytest to mock a fake api call
+    
+    Then we check if our fake api is processed as how we expected with assert validations
+    
+    '''
+    
     mock_import_api_variables.return_value = {
         'alpha_url': 'alpha_url',
         'alpha_key': 'alpha_key',
@@ -95,7 +105,7 @@ def test_extract_daily_data(mock_get, mock_import_api_variables):
         assert 'AnalystRatingStrongSell' in result.columns
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_dimension_data: {e}")
+        pytest.fail(f"Error when executing test extract_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

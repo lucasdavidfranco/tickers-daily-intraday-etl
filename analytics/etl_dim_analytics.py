@@ -10,6 +10,18 @@ import utils.db_utils as db_utils
 
 def extract_dimension_data():
     
+    ''' Gets data from alphavantage API
+    
+    This function is to retrieve dimensional data of tickers.
+    
+    Due to the fact that only one ticker can be requested in every api call, this process is iterated for every ticker using a for loop
+    
+    Once every ticker has been requested to the API, all data is concatenated on a final dataframe used in next step transform_daily_data
+    
+    If request can not be done, process ends with its error code 
+    
+    '''
+    
     alpha_url = db_utils.import_api_variables()['alpha_url']
     alpha_key = db_utils.import_api_variables()['alpha_key']
     tickers = db_utils.import_api_variables()['tickers']
@@ -23,7 +35,6 @@ def extract_dimension_data():
 
     for ticker in tickers:
         
-        print(f"Getting data for {ticker}\n")
         ticker_params['symbol'] = ticker
         ticker_response = requests.get(alpha_url, params = ticker_params)
                 
@@ -43,6 +54,22 @@ def extract_dimension_data():
 
 
 def transform_dimension_data():
+    
+    ''' Tranforms data retrieved from API
+    
+    Once we get the data, this is transformed using pandas
+    
+    We convert columns to numeric using pandas and drop columns that are not necessary
+    
+    We create new columns such as is_current, audit_datetime, analyst_rating and subrogate_key
+    
+    Analyst rating is a column based on four numeric columns which after applying a map we can set which is analyst most popular recommendation
+    
+    Subrogate key is based on a function. We create this field to get a unique identificator for the row based on attributes 
+    
+    This identificator will help us on upload_dimension_data to determinate if a record is new and should be inserted or not
+    
+    '''
     
     ticker_dataframe = extract_dimension_data()
     ticker_dataframe_filter = ticker_dataframe[['Symbol', 'AssetType', 'Name', 'Country', 'Sector', 'Industry', 'Address', 'OfficialSite', 'AnalystRatingStrongBuy', 'AnalystRatingBuy', 'AnalystRatingHold', 'AnalystRatingSell', 'AnalystRatingStrongSell']].copy()
@@ -71,6 +98,29 @@ def transform_dimension_data():
 
 
 def load_dimension_data():
+    
+    ''' Load data retrieved from API
+    
+    Once we get the data in proper data types and transformed we upload it to redshift using SQL Alchemy engine
+    
+    For the upload 4 SQL scripts are run: 
+    
+    create_temp_table_query: This scripts creates a temporary table which is automatically deleted when session is over.
+    Data retrieved from API is uploaded to this temporary table.
+    
+    replace_old_dimensions: In case we retrieve a ticker that has changes and exists on table, subrogate key will change, so data that 
+    is on this table for this ticker is no longer current data. Is_current flg is set to 0 and date_to is set to previous day. 
+    Also is updated audit_datetime to keep a track when this record was set to not current
+
+    update_last_refresh: In case we retrieve a ticker that does not have changes, subrogate key will be the same. Data on the table
+    for this ticker is current data. We update audit_datetime to keep a track when this record was last retrieved
+    
+    insert_new_dimensions: In case we retrieve a new ticker or a ticker that has changes, subrogate key will change. 
+    This data is new current data. We upload it to dimension data
+    
+    In case there is any error on this, a log will be printed with its error on airflow log   
+    
+    '''
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()

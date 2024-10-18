@@ -17,6 +17,20 @@ from analytics.etl_dim_analytics import load_dimension_data
 @mock.patch('pandas.DataFrame.to_sql')
 def test_load_dimension_data(mock_to_sql, mock_transform_dimension_data, mock_connect_to_redshift, mock_import_db_variables):
     
+    '''
+    
+    Test load dimension data
+    
+    We use unitttest and run a pytest to mock a fake redshift connection, mock upload to sql and fake data retrieved from API
+    
+    Then we check if our fake connection runs a fake execute to upload our fake data to fake database
+    
+    Also we check if our fake connection runs a fake upload to_sql our fake data to fake database temp table
+    
+    In the end we check if our fake connection runs a fake execute insert into script to upload our fake data to fake database
+    
+    '''
+    
     mock_import_db_variables.return_value = {
         'redshift_schema': 'fake_schema'
     }
@@ -48,7 +62,7 @@ def test_load_dimension_data(mock_to_sql, mock_transform_dimension_data, mock_co
         assert "INSERT INTO" in str(mock_connection.execute.call_args[0][0])
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar test load_dimension_data: {e}")
+        pytest.fail(f"Error when executing test load_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

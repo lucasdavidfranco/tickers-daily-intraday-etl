@@ -16,6 +16,16 @@ from staging.etl_staging_daily import extract_daily_data
 @patch('staging.etl_staging_daily.requests.get')
 def test_extract_intraday_data(mock_get, mock_import_api_variables):
     
+    '''
+    
+    Test extract intraday data
+    
+    We use unitttest and run a pytest to mock a fake api call
+    
+    Then we check if our fake api is processed as how we expected with assert validations
+    
+    '''
+    
     mock_import_api_variables.return_value = {
         'twelve_url': 'twelve_url',
         'twelve_key': 'twelve_key',
@@ -54,13 +64,23 @@ def test_extract_intraday_data(mock_get, mock_import_api_variables):
         assert pd.to_datetime(result['event_datetime'], errors='coerce').notnull().all()
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar test extract_intraday_data: {e}")
+        pytest.fail(f"Error when executing test extract_intraday_data: {e}")
 
 @patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_api_variables')
 @patch('utils.db_utils.import_db_variables')
 @patch('staging.etl_staging_daily.requests.get')
 def test_extract_daily_data(mock_get, mock_import_db_variables, mock_import_api_variables, mock_connect_to_redshift):
+    
+    '''
+    
+    Test extract daily data
+    
+    We use unitttest and run a pytest to mock a fake api call
+    
+    Then we check if our fake api is processed as how we expected with assert validations
+    
+    '''
     
     mock_import_api_variables.return_value = {
         'alpha_url': 'alpha_url',
@@ -102,7 +122,7 @@ def test_extract_daily_data(mock_get, mock_import_db_variables, mock_import_api_
         assert pd.to_datetime(result['event_date'], errors='coerce').notnull().all()
     
     except Exception as e:
-        pytest.fail(f"Error al ejecutar extract_daily_data: {e}")
+        pytest.fail(f"Error whene executing test extract_daily_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

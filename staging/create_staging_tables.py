@@ -1,6 +1,4 @@
 
-# IMPORTACION BIBLIOTECAS REQUERIDAS # 
-
 import os
 import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -10,7 +8,7 @@ import utils.db_utils as db_utils
 
 def create_staging_tables():
     
-    ''' Checks if all staging tables exists and creates them if they are not '''
+    ''' Checks if all staging tables exists and creates them if they do not '''
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
     connection = db_utils.connect_to_redshift()

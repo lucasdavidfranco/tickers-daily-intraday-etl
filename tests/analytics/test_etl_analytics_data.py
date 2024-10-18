@@ -14,6 +14,18 @@ from analytics.etl_fact_analytics import etl_fact_analytics
 @mock.patch('utils.db_utils.connect_to_redshift')
 def test_etl_fact_analytics(mock_connect_to_redshift, mock_import_db_variables):
     
+    '''
+    
+    Test etl fact analytics
+    
+    We use unitttest and run a pytest to mock a fake redshift connection
+    
+    Then we check if our fake connection connects and runs 2 fake execute to upload our fake data to fake database
+    
+    Also we check if those execute are two insert data scripts 
+    
+    '''
+    
     mock_connection = mock.Mock()
     mock_connect_to_redshift.return_value = mock_connection
     mock_import_db_variables.return_value = {'redshift_schema': 'fake_schema'}
@@ -27,7 +39,7 @@ def test_etl_fact_analytics(mock_connect_to_redshift, mock_import_db_variables):
         assert all("INSERT INTO" in query for query in insert_queries)
         
     except Exception as e:
-        pytest.fail(f"Error al ejecutar test etl_fact_analytics: {e}")
+        pytest.fail(f"Error when executing test etl_fact_analytics: {e}")
 
 if __name__ == "__main__":
     pytest.main()

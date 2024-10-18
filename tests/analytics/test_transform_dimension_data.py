@@ -15,6 +15,16 @@ from analytics.etl_dim_analytics import transform_dimension_data
 @patch('utils.db_utils.subrogate_key')
 def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
     
+    '''
+    
+    Test transform dimension data
+    
+    We use unitttest and run a pytest to mock fake data retrieved from API
+    
+    Then we check if our fake data is processed as how we expected with assert validations
+    
+    '''
+    
     mock_extract_dimension_data.return_value = pd.DataFrame({
         'Symbol': ['IBM'],
         'AssetType': ['Common Stock'],
@@ -80,7 +90,7 @@ def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
         assert all(column in result_df.columns for column in expected_columns)
 
     except Exception as e:
-        pytest.fail(f'Error al ejecutar transform_dimension_data: {e}')
+        pytest.fail(f'Error when executing test transform_dimension_data: {e}')
 
 if __name__ == '__main__':
     pytest.main()
