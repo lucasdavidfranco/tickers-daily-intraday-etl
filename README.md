@@ -121,4 +121,4 @@ Several tests are performed to check functions of the ETL process
 
 ## Autors
 
-- **Lucas Franco** - [Tu GitHub](https://github.com/lucasdavidfranco)
+- **Lucas Franco** - [Github](https://github.com/lucasdavidfranco)

@@ -42,7 +42,6 @@ def extract_daily_data():
         ticker_params['symbol'] = ticker
         is_incremental = f"""select max(event_date) as q from "{redshift_schema}".staging_daily_tickers where ticker = '{ticker}'"""
         max_staging_date = connection.execute(is_incremental).fetchone()
-        print(ticker)
         
         if max_staging_date[0] is not None:
             
