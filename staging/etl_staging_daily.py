@@ -99,7 +99,7 @@ def transform_daily_data():
     ticker_dataframe.loc[:, numeric_columns] = ticker_dataframe[numeric_columns].apply(pd.to_numeric, errors = 'coerce')
     ticker_dataframe['event_date'] = pd.to_datetime(ticker_dataframe['event_date']).dt.date
     ticker_dataframe_prefilter = pd.merge(ticker_dataframe, max_staging_date_df, on='ticker', how='left')
-    ticker_dataframe_prefilter['last_event_date'] = ticker_dataframe_prefilter['last_event_date'].fillna(pd.Timestamp('2000-01-01'))
+    ticker_dataframe_prefilter['last_event_date'] = ticker_dataframe_prefilter['last_event_date'].fillna(pd.Timestamp('2000-01-01')).dt.date
     ticker_dataframe_filter = ticker_dataframe_prefilter[ticker_dataframe_prefilter['event_date'] > ticker_dataframe_prefilter['last_event_date']].copy()
     return ticker_dataframe_filter
 
