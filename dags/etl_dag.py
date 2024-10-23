@@ -18,7 +18,7 @@ default_args = {
     "depends_on_past": False,
     'start_date': days_ago(1),
     "retries": 1,
-    "retry_delay": timedelta(minutes=10)
+    "retry_delay": timedelta(minutes=3)
 }
 
 with DAG(
