@@ -89,9 +89,17 @@ def etl_fact_analytics():
                 close_value_sma,
                 volume_sma,
                 previous_volume_amount,
-                100 * ( volume_amount / previous_volume_amount - 1) as minute_volume_amount_variation,
+                case 
+                    when previous_volume_amount = 0 and volume_amount = 0 then 0
+                    when previous_volume_amount = 0 and volume_amount != 0 then 100
+                    else 100 * ( volume_amount / previous_volume_amount - 1) 
+                end as minute_volume_amount_variation,
                 previous_close_value,
-                100 * ( close_value / previous_close_value - 1) as minute_close_value_variation,
+                case 
+                    when close_value = 0 and previous_close_value = 0 then 0
+                    when close_value = 0 and previous_close_value != 0 then 100
+                    else 100 * ( close_value / previous_close_value - 1) 
+                end as minute_close_value_variation,
                 current_timestamp as audit_datetime
             from base
             where 1 = 1
@@ -154,9 +162,17 @@ def etl_fact_analytics():
                 close_value_sma,
                 volume_sma,
                 previous_volume_amount,
-                100 * ( volume_amount / previous_volume_amount - 1) as daily_volume_amount_variation,
+                case 
+                    when previous_volume_amount = 0 and volume_amount = 0 then 0
+                    when previous_volume_amount = 0 and volume_amount != 0 then 100
+                    else 100 * ( volume_amount / previous_volume_amount - 1)
+                end as daily_volume_amount_variation,
                 previous_close_value,
-                100 * ( close_value / previous_close_value - 1) as daily_close_value_variation,
+                case 
+                    when close_value = 0 and previous_close_value = 0 then 0
+                    when close_value = 0 and previous_close_value != 0 then 100
+                    else 100 * ( close_value / previous_close_value - 1) 
+                end as daily_close_value_variation,
                 current_timestamp as audit_datetime
             from base
             where 1 = 1
