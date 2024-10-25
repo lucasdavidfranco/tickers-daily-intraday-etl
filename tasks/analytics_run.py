@@ -26,6 +26,10 @@ def analytics_run():
     
     etl_fact_analytics.etl_fact_analytics()
     
+    etl_dim_analytics.extract_dimension_data()
+    
+    etl_dim_analytics.transform_dimension_data()
+    
     etl_dim_analytics.load_dimension_data()
     
 if __name__ == "__main__":
