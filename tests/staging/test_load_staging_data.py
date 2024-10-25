@@ -70,8 +70,7 @@ def test_load_daily_data(mock_to_sql, mock_import_db_variables, mock_connect_to_
     
 @patch('utils.db_utils.connect_to_redshift')
 @patch('utils.db_utils.import_db_variables')
-@patch('staging.transform_staging_data.transform_staging_data')
-def test_load_daily_data_no_new_data(mock_transform_daily_data, mock_import_db_variables, mock_connect_to_redshift):
+def test_load_daily_data_no_new_data(mock_import_db_variables, mock_connect_to_redshift):
     
     '''
     
@@ -102,7 +101,7 @@ def test_load_daily_data_no_new_data(mock_transform_daily_data, mock_import_db_v
     
         load_staging_data(read_dir=temp_dir)
         
-        assert mock_connection.close.call_count == 2
+        assert mock_connection.close.call_count == 1
 
 if __name__ == "__main__":
     pytest.main()

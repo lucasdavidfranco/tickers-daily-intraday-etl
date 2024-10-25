@@ -34,15 +34,15 @@ def load_staging_data(read_dir=None):
         read_dir = read_dir or os.path.join(current_dir, "data")
         parquet_read = os.path.join(read_dir, f'{parquet_file}.parquet')
         ticker_dataframe_final = pd.read_parquet(parquet_read)
-        
+            
         if not ticker_dataframe_final.empty:
             
             ticker_dataframe_final.loc[:, 'audit_datetime'] = pd.Timestamp.now()
-            ticker_dataframe_final.to_sql({table_name}, con = connection, index=False, if_exists='append', method='multi', schema = redshift_schema)
+            ticker_dataframe_final.to_sql(table_name, con = connection, index=False, if_exists='append', method='multi', schema = redshift_schema)
             print(f"Table {table_name} up to date. New records added")
-            connection.close()
-            
+
         else:
 
             print(f"Table {table_name} up to date. No new information to upload\n")
-            connection.close()
+
+    connection.close()
