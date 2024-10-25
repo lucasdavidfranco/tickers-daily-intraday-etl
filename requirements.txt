@@ -20,7 +20,7 @@ pyarrow==17.0.0
 pyparsing==3.1.4
 pyrsistent==0.19.3
 pytest==7.4.0
-pytest-mock-3.14.0
+pytest-mock==3.14.0
 python-daemon==3.0.1
 python-dateutil==2.8.2
 python-dotenv==1.0.1
