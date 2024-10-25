@@ -32,7 +32,7 @@ with DAG(
         task_id='staging',
         python_callable=staging_run
     )
-
+    
     analytics_task = PythonOperator(
         task_id='analytics',
         python_callable=analytics_run
