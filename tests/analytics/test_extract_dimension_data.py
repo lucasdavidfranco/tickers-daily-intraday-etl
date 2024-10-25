@@ -3,6 +3,8 @@ import pytest
 from unittest.mock import patch
 import sys
 import os
+import tempfile
+import pandas as pd
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, '../..')
@@ -10,9 +12,9 @@ sys.path.append(project_root)
 
 from analytics.etl_dim_analytics import extract_dimension_data
 
-@patch('utils.db_utils.import_api_variables')
-@patch('staging.etl_staging_daily.requests.get')
-def test_extract_daily_data(mock_get, mock_import_api_variables):
+@patch('utils.api_utils.import_api_variables')
+@patch('requests.get')
+def test_extract_dimension_data(mock_get, mock_import_api_variables):
     
     '''
     
@@ -87,8 +89,13 @@ def test_extract_daily_data(mock_get, mock_import_api_variables):
         "ExDividendDate": "2024-08-09"
     }
     
-    try:
-        result = extract_dimension_data()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        
+        parquet_path = os.path.join(temp_dir, 'extract_dimension_data.parquet')
+        
+        extract_dimension_data(parquet_path=parquet_path)
+    
+        result = pd.read_parquet(parquet_path)
         assert not result.empty
         assert 'Symbol' in result.columns
         assert 'AssetType' in result.columns
@@ -103,9 +110,6 @@ def test_extract_daily_data(mock_get, mock_import_api_variables):
         assert 'AnalystRatingHold' in result.columns
         assert 'AnalystRatingSell' in result.columns
         assert 'AnalystRatingStrongSell' in result.columns
-    
-    except Exception as e:
-        pytest.fail(f"Error when executing test extract_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

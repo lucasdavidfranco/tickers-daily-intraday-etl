@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 import hashlib
-import sys
 
 def import_db_variables():
     
@@ -33,34 +32,6 @@ def import_db_variables():
         'redshift_schema': redshift_schema
     }
 
-def import_api_variables():
-    
-    '''
-    
-    Import api variables
-    
-    We get from an .env file API keys to retrieve data. 
-    
-    Also on this function is set all tickers that will be processed on full ETL process
-    
-    '''
-    
-    load_dotenv()
-    
-    alpha_url = "https://www.alphavantage.co/query"
-    alpha_key = os.getenv('ALPHA_KEY')
-    twelve_url = "https://api.twelvedata.com/time_series"
-    twelve_key = os.getenv('TWELVE_KEY')
-    tickers = ['XOM', 'CVX', 'JPM']
-
-    return {
-        'alpha_url': alpha_url,
-        'alpha_key': alpha_key,
-        'twelve_url': twelve_url,
-        'twelve_key': twelve_key,
-        'tickers': tickers
-    }
-
 def connect_to_redshift():
     
     '''
@@ -79,18 +50,10 @@ def connect_to_redshift():
     database = db_variables['database']
     connection_string = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
     engine = create_engine(connection_string)
-    
-    try:
-        
-        connection = engine.connect()
-        connection_query = """SELECT schema_name FROM information_schema.schemata;"""
-        connection.execute(connection_query)
-        return connection
-
-    except Exception as e:
-        
-        print(f"Unable to connect to Redshift database\nError: {e}")
-        sys.exit("End of process")
+    connection = engine.connect()
+    connection_query = """SELECT schema_name FROM information_schema.schemata;"""
+    connection.execute(connection_query)
+    return connection
 
 def subrogate_key(*cols):
     

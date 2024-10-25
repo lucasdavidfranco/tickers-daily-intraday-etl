@@ -4,6 +4,7 @@ from unittest import mock
 import pandas as pd
 import sys
 import os
+import tempfile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, '../..')
@@ -38,7 +39,7 @@ def test_load_dimension_data(mock_to_sql, mock_transform_dimension_data, mock_co
     mock_connection = mock.Mock()
     mock_connect_to_redshift.return_value = mock_connection
     
-    mock_transform_dimension_data.return_value = pd.DataFrame({
+    dimension_data = pd.DataFrame({
     'ticker': ['AAPL', 'MSFT'],
     'asset_type': ['Stock', 'Stock'],
     'name': ['Apple Inc.', 'Microsoft Corp.'],
@@ -53,16 +54,17 @@ def test_load_dimension_data(mock_to_sql, mock_transform_dimension_data, mock_co
     'audit_datetime': ['2024-10-17', '2024-10-17']
     })
 
-    load_dimension_data()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        
+        parquet_transform_dimension_path = os.path.join(temp_dir, f'transform_dimension_data.parquet')
+        dimension_data.to_parquet(parquet_transform_dimension_path)
+
+        load_dimension_data(read_dir=temp_dir)
     
-    try:
         mock_connect_to_redshift.assert_called_once()
         mock_to_sql.assert_called_once()
         mock_connection.execute.assert_called()
         assert "INSERT INTO" in str(mock_connection.execute.call_args[0][0])
-    
-    except Exception as e:
-        pytest.fail(f"Error when executing test load_dimension_data: {e}")
 
 if __name__ == "__main__":
     pytest.main()

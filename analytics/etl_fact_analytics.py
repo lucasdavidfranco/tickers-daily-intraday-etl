@@ -182,15 +182,7 @@ def etl_fact_analytics():
     
     for table_name, etl_definition in etl_process.items():
         
-        try:
-            
-            connection.execute(etl_definition)
-            print(f"Table {table_name} up to date\n")
+        connection.execute(etl_definition)
+        print(f"Table {table_name} up to date\n")
         
-        except Exception as e:
-                
-            print(f"Could not update {table_name}: {e} \n")
-            connection.close()
-            sys.exit("End of process")
-   
     connection.close()
