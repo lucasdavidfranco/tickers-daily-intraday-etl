@@ -32,14 +32,10 @@ def test_etl_fact_analytics(mock_connect_to_redshift, mock_import_db_variables):
 
     etl_fact_analytics()
     
-    try:
-        mock_connect_to_redshift.assert_called_once()
-        assert mock_connection.execute.call_count == 2
-        insert_queries = [str(call[0][0]) for call in mock_connection.execute.call_args_list]
-        assert all("INSERT INTO" in query for query in insert_queries)
-        
-    except Exception as e:
-        pytest.fail(f"Error when executing test etl_fact_analytics: {e}")
+    mock_connect_to_redshift.assert_called_once()
+    assert mock_connection.execute.call_count == 2
+    insert_queries = [str(call[0][0]) for call in mock_connection.execute.call_args_list]
+    assert all("INSERT INTO" in query for query in insert_queries)
 
 if __name__ == "__main__":
     pytest.main()

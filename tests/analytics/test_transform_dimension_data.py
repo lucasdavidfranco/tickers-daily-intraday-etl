@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pandas as pd
 import sys
 import os
+import tempfile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, '../..')
@@ -13,7 +14,7 @@ from analytics.etl_dim_analytics import transform_dimension_data
 
 @patch('analytics.etl_dim_analytics.extract_dimension_data')
 @patch('utils.db_utils.subrogate_key')
-def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
+def test_transform_dimension_data(mock_subrogate_key, mock_extract_dimension_data):
     
     '''
     
@@ -25,7 +26,7 @@ def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
     
     '''
     
-    mock_extract_dimension_data.return_value = pd.DataFrame({
+    dimension_data = pd.DataFrame({
         'Symbol': ['IBM'],
         'AssetType': ['Common Stock'],
         'Name': ['International Business Machines'],
@@ -80,17 +81,21 @@ def test_extract_daily_data(mock_subrogate_key, mock_extract_dimension_data):
         'ExDividendDate': ['2024-08-09']
     })
     
-    mock_subrogate_key.return_value = 'fake_key'
-    
-    result_df = transform_dimension_data() 
-    expected_columns = ['ticker', 'asset_type', 'name', 'country', 'sector', 'industry', 'address', 
-        'official_site', 'analyst_rating', 'subrogate_key', 'is_current', 'audit_datetime']
-       
-    try:
-        assert all(column in result_df.columns for column in expected_columns)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        
+        parquet_extract_dimension_path = os.path.join(temp_dir, f'extract_dimension_data.parquet')
+        dimension_data.to_parquet(parquet_extract_dimension_path)
+        mock_subrogate_key.return_value = 'fake_key'
+        
+        transform_dimension_data(read_dir=temp_dir,write_dir=temp_dir)
+        
+        parquet_transform_dimension_path = os.path.join(temp_dir, f'transform_dimension_data.parquet')
+        result = pd.read_parquet(parquet_transform_dimension_path)
 
-    except Exception as e:
-        pytest.fail(f'Error when executing test transform_dimension_data: {e}')
-
+        expected_columns = ['ticker', 'asset_type', 'name', 'country', 'sector', 'industry', 'address', 
+            'official_site', 'analyst_rating', 'subrogate_key', 'is_current', 'audit_datetime']
+        
+        assert all(column in result.columns for column in expected_columns)
+        
 if __name__ == '__main__':
     pytest.main()

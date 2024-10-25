@@ -7,8 +7,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, '..')
 sys.path.append(project_root)
 import utils.db_utils as db_utils
+import utils.api_utils as api_utils
 
-def extract_dimension_data():
+def extract_dimension_data(parquet_path=None):
     
     ''' Gets data from alphavantage API
     
@@ -22,9 +23,9 @@ def extract_dimension_data():
     
     '''
     
-    alpha_url = db_utils.import_api_variables()['alpha_url']
-    alpha_key = db_utils.import_api_variables()['alpha_key']
-    tickers = db_utils.import_api_variables()['tickers']
+    alpha_url = api_utils.import_api_variables()['alpha_url']
+    alpha_key = api_utils.import_api_variables()['alpha_key']
+    tickers = api_utils.import_api_variables()['tickers']
     
     ticker_params = {
         'function': 'OVERVIEW',
@@ -47,13 +48,15 @@ def extract_dimension_data():
         else:
             
             print(f"Error: Could not retrieve data (State code: {ticker_response.status_code})\n")
-            sys.exit("End of process")
+            ticker_response.raise_for_status()
             
     ticker_dataframe_final = pd.concat(dataframe_append, ignore_index = True)
-    return ticker_dataframe_final
+    if not parquet_path:
+        parquet_path = os.path.join(current_dir, 'data/extract_dimension_data.parquet')
+    ticker_dataframe_final.to_parquet(parquet_path)
 
 
-def transform_dimension_data():
+def transform_dimension_data(read_dir=None, write_dir=None):
     
     ''' Tranforms data retrieved from API
     
@@ -71,7 +74,14 @@ def transform_dimension_data():
     
     '''
     
-    ticker_dataframe = extract_dimension_data()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    write_dir = write_dir or os.path.join(current_dir, "data")
+    read_dir = read_dir or os.path.join(current_dir, "data")
+    
+    os.makedirs(write_dir, exist_ok=True)
+    
+    parquet_read = os.path.join(read_dir, 'extract_dimension_data.parquet')
+    ticker_dataframe = pd.read_parquet(parquet_read)
     ticker_dataframe_filter = ticker_dataframe[['Symbol', 'AssetType', 'Name', 'Country', 'Sector', 'Industry', 'Address', 'OfficialSite', 'AnalystRatingStrongBuy', 'AnalystRatingBuy', 'AnalystRatingHold', 'AnalystRatingSell', 'AnalystRatingStrongSell']].copy()
     ticker_dataframe_filter.columns = ['ticker', 'asset_type', 'name', 'country', 'sector', 'industry', 'address', 'official_site', 'strong_buy_rating', 'buy_rating', 'hold_rating', 'sell_rating', 'strong_sell_rating']
     string_columns = ['asset_type', 'name', 'country', 'sector', 'industry', 'address', 'official_site']
@@ -94,10 +104,11 @@ def transform_dimension_data():
         is_current = 1,
         audit_datetime = pd.Timestamp.now()
     )
-    return ticker_dataframe_final
+    parquet_transform = os.path.join(write_dir, f'transform_dimension_data.parquet')
+    ticker_dataframe_final.to_parquet(parquet_transform)
 
 
-def load_dimension_data():
+def load_dimension_data(read_dir=None):
     
     ''' Load data retrieved from API
     
@@ -123,8 +134,10 @@ def load_dimension_data():
     '''
 
     redshift_schema = db_utils.import_db_variables()['redshift_schema']
-    connection = db_utils.connect_to_redshift()
-    ticker_dataframe_final = transform_dimension_data()
+    connection = db_utils.connect_to_redshift()  
+    read_dir = read_dir or os.path.join(current_dir, "data")
+    parquet_read = os.path.join(read_dir, 'transform_dimension_data.parquet')
+    ticker_dataframe_final = pd.read_parquet(parquet_read)
    
     queries = {
         "create_temp_table_query": """
@@ -199,22 +212,14 @@ def load_dimension_data():
    
     for query_name, query_definition in queries.items():
         
-        try:
-        
-            if query_name == 'create_temp_table_query':
+        if query_name == 'create_temp_table_query':
 
-                connection.execute(query_definition)
-                ticker_dataframe_final.to_sql(name = 'temp_dim_tickers', con = connection, schema = None, index=False, if_exists='append')
+            connection.execute(query_definition)
+            ticker_dataframe_final.to_sql(name = 'temp_dim_tickers', con = connection, schema = None, index=False, if_exists='append')
             
-            else:
+        else:
                 
-                connection.execute(query_definition)
+            connection.execute(query_definition)
         
-        except Exception as e:
-                
-            print(f"Could not update analytics_dim_tickers: {e} \n")
-            connection.close()
-            sys.exit("End of process")
-   
     print("Table analytics_dim_tickers up to date")
     connection.close()
